@@ -1,22 +1,58 @@
-def findPosition(self, frame, handNo=0):
+import cv2
+import mediapipe as mp
 
-    landmark_list = []
 
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+class HandTracker:
 
-    results = self.hands.process(rgb)
+    def __init__(self):
+        self.mpHands = mp.solutions.hands
 
-    if results.multi_hand_landmarks:
+        self.hands = self.mpHands.Hands(
+            static_image_mode=False,
+            max_num_hands=1,
+            min_detection_confidence=0.7,
+            min_tracking_confidence=0.7
+        )
 
-        myHand = results.multi_hand_landmarks[handNo]
+        self.mpDraw = mp.solutions.drawing_utils
 
-        h, w, c = frame.shape
+    def findHands(self, frame):
 
-        for id, lm in enumerate(myHand.landmark):
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            cx = int(lm.x * w)
-            cy = int(lm.y * h)
+        results = self.hands.process(rgb)
 
-            landmark_list.append([id, cx, cy])
+        if results.multi_hand_landmarks:
 
-    return landmark_list
+            for hand in results.multi_hand_landmarks:
+
+                self.mpDraw.draw_landmarks(
+                    frame,
+                    hand,
+                    self.mpHands.HAND_CONNECTIONS
+                )
+
+        return frame
+
+    def findPosition(self, frame, handNo=0):
+
+        landmark_list = []
+
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        results = self.hands.process(rgb)
+
+        if results.multi_hand_landmarks:
+
+            myHand = results.multi_hand_landmarks[handNo]
+
+            h, w, c = frame.shape
+
+            for id, lm in enumerate(myHand.landmark):
+
+                cx = int(lm.x * w)
+                cy = int(lm.y * h)
+
+                landmark_list.append([id, cx, cy])
+
+        return landmark_list
